@@ -1,4 +1,8 @@
 !include "x64.nsh"
+!include "FileFunc.nsh"
+!include "LogicLib.nsh"
+!insertmacro GetParameters
+!insertmacro GetOptions
 
 ;--------------------------------
 ;Include Modern UI
@@ -55,13 +59,14 @@
 ; Initialisation functions
 Function .onInit
 
-  ReadRegStr $R0 HKCU "Software\Compute Module Boot" ""
-  StrCmp $R0 "" done
+  ${GetParameters} $R1
+  ClearErrors
+  StrCmp $R1 "-CheckInstalled" 0 ret
 
-  MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-  "'Compute Module Boot' is already installed. $\n$\nClick `OK` to remove the \
-  previous version or `Cancel` to cancel this upgrade." \
-  IDOK uninst
+  ReadRegStr $R0 HKCU "Software\Raspberry Pi" ""
+  StrCmp $R0 "" ret
+
+  SetErrorLevel 5
   Abort
 
 ;Run the uninstaller
@@ -83,7 +88,9 @@ uninst:
 done:
 
   RmDir /r /REBOOTOK $R0 
+  DeleteRegKey HKCU "Software\Raspberry Pi"
 
+ret:
 FunctionEnd
 
 ;--------------------------------
